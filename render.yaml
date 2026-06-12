@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: tv-kucoin-bot
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: KUCOIN_API_KEY
+        sync: false
+      - key: KUCOIN_API_SECRET
+        sync: false
+      - key: KUCOIN_API_PASSPHRASE
+        sync: false
+      - key: WEBHOOK_SECRET
+        sync: false
+      - key: SYMBOL
+        value: XBTUSDTM
+      - key: LEVERAGE
+        value: "1"
+      - key: SL_PCT
+        value: "4.0"
+      - key: TRAIL_PCT
+        value: "7.0"
+      - key: TRAIL_QTY_PCT
+        value: "80.0"
+      - key: POSITION_SIZE_USD
+        value: "1000"
