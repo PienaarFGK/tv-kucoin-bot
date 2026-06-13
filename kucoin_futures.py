@@ -126,7 +126,6 @@ class KuCoinFuturesClient:
             "stop": stop_direction,
             "stopPrice": str(round(stop_price, 1)),
             "stopPriceType": "MP",  # Mark price
-            "closeOrder": True,
         }
         logger.info(f"Placing stop order: {data}")
         return self._post("/api/v1/orders", data)
