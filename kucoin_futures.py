@@ -130,7 +130,7 @@ class KuCoinFuturesClient:
             "reduceOnly": reduce_only,
         }
         logger.info(f"Placing stop order: {data}")
-        return self._post("/api/v1/orders", data)
+        return self._post("/api/v1/stop-orders", data)
 
     def cancel_order(self, order_id: str) -> dict:
         logger.info(f"Cancelling order: {order_id}")
