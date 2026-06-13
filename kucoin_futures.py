@@ -114,7 +114,6 @@ class KuCoinFuturesClient:
         stop_price: float,
         stop_direction: str,
         leverage: int,
-        reduce_only: bool = True,
     ) -> dict:
         """Stop market order. stop_direction = 'down' (long SL) | 'up' (short SL)."""
         data = {
@@ -127,10 +126,10 @@ class KuCoinFuturesClient:
             "stop": stop_direction,
             "stopPrice": str(round(stop_price, 1)),
             "stopPriceType": "MP",  # Mark price
-            "reduceOnly": reduce_only,
+            "closeOrder": True,
         }
         logger.info(f"Placing stop order: {data}")
-        return self._post("/api/v1/stop-orders", data)
+        return self._post("/api/v1/orders", data)
 
     def cancel_order(self, order_id: str) -> dict:
         logger.info(f"Cancelling order: {order_id}")
