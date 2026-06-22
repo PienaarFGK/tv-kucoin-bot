@@ -54,10 +54,12 @@ async def webhook(request: Request):
 
     logger.info(f"Webhook received: action={action} symbol={symbol}")
 
+    leverage = body.get("leverage")
+
     if action == "long_entry":
-        await pm.open_long(symbol)
+        await pm.open_long(symbol, leverage=leverage)
     elif action == "short_entry":
-        await pm.open_short(symbol)
+        await pm.open_short(symbol, leverage=leverage)
     elif action == "long_exit":
         await pm.close_long(symbol, reason="hist_flip")
     elif action == "short_exit":

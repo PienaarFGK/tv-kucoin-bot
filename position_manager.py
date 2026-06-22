@@ -35,17 +35,18 @@ class PositionManager:
 
     # ── Helpers ───────────────────────────────────────────────────────────────
 
-    def _contracts(self, price: float) -> int:
+    def _contracts(self, price: float, leverage: int = None) -> int:
         """Convert USD position size + leverage to number of contracts.
         XBTUSDTM: 1 contract = 0.001 BTC, so 1 contract ≈ price * 0.001 USDT.
         """
-        notional = self.position_usd * self.leverage
+        lev = leverage if leverage else self.leverage
+        notional = self.position_usd * lev
         contracts = int(notional / (price * 0.001))
         return max(1, contracts)
 
     # ── Entry ─────────────────────────────────────────────────────────────────
 
-    async def open_long(self, symbol: str):
+    async def open_long(self, symbol: str, leverage: int = None):
         if symbol in self.positions:
             logger.warning(f"Already in {symbol} position — long entry ignored")
             return
@@ -55,26 +56,27 @@ class PositionManager:
             logger.error(f"Cannot get mark price for {symbol}")
             return
 
-        size     = self._contracts(price)
+        lev      = int(leverage) if leverage else self.leverage
+        size     = self._contracts(price, lev)
         sl_price = round(price * (1 - self.sl_pct / 100), 1)
 
-        logger.info(f"LONG {symbol} | size={size} entry≈{price} SL={sl_price} lev={self.leverage}x")
+        logger.info(f"LONG {symbol} | size={size} entry≈{price} SL={sl_price} lev={lev}x")
 
-        self.kucoin.place_market_order(symbol, "buy", size, self.leverage)
-        sl = self.kucoin.place_stop_market_order(symbol, "sell", size, sl_price, "down", self.leverage)
+        self.kucoin.place_market_order(symbol, "buy", size, lev)
+        sl = self.kucoin.place_stop_market_order(symbol, "sell", size, sl_price, "down", lev)
 
         self.positions[symbol] = Position(
             symbol=symbol,
             direction="long",
             entry_price=price,
             size=size,
-            leverage=self.leverage,
+            leverage=lev,
             stop_order_id=sl.get("orderId"),
             trail_extreme=price,
         )
         logger.info(f"LONG open. SL order id: {sl.get('orderId')}")
 
-    async def open_short(self, symbol: str):
+    async def open_short(self, symbol: str, leverage: int = None):
         if symbol in self.positions:
             logger.warning(f"Already in {symbol} position — short entry ignored")
             return
@@ -84,20 +86,21 @@ class PositionManager:
             logger.error(f"Cannot get mark price for {symbol}")
             return
 
-        size     = self._contracts(price)
+        lev      = int(leverage) if leverage else self.leverage
+        size     = self._contracts(price, lev)
         sl_price = round(price * (1 + self.sl_pct / 100), 1)
 
-        logger.info(f"SHORT {symbol} | size={size} entry≈{price} SL={sl_price} lev={self.leverage}x")
+        logger.info(f"SHORT {symbol} | size={size} entry≈{price} SL={sl_price} lev={lev}x")
 
-        self.kucoin.place_market_order(symbol, "sell", size, self.leverage)
-        sl = self.kucoin.place_stop_market_order(symbol, "buy", size, sl_price, "up", self.leverage)
+        self.kucoin.place_market_order(symbol, "sell", size, lev)
+        sl = self.kucoin.place_stop_market_order(symbol, "buy", size, sl_price, "up", lev)
 
         self.positions[symbol] = Position(
             symbol=symbol,
             direction="short",
             entry_price=price,
             size=size,
-            leverage=self.leverage,
+            leverage=lev,
             stop_order_id=sl.get("orderId"),
             trail_extreme=price,
         )
