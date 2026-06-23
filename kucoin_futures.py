@@ -88,6 +88,13 @@ class KuCoinFuturesClient:
     def get_position(self, symbol: str) -> dict | None:
         return self._get(f"/api/v1/position?symbol={symbol}")
 
+    def get_available_balance(self, currency: str = "USDT") -> float | None:
+        """Returns available balance in the futures account for the given currency."""
+        data = self._get(f"/api/v1/account-overview?currency={currency}")
+        if data:
+            return float(data.get("availableBalance", 0))
+        return None
+
     # ── Orders ────────────────────────────────────────────────────────────────
 
     def place_market_order(

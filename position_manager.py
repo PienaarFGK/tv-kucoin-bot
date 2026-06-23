@@ -35,12 +35,28 @@ class PositionManager:
 
     # ── Helpers ───────────────────────────────────────────────────────────────
 
+    def _safe_position_usd(self, leverage: int) -> float:
+        """Cap position_usd so required margin never exceeds 80% of available balance."""
+        balance = self.kucoin.get_available_balance()
+        if balance is None:
+            logger.warning("Could not fetch account balance — using configured POSITION_SIZE_USD")
+            return self.position_usd
+        max_position_usd = balance * 0.80 * leverage
+        if self.position_usd > max_position_usd:
+            logger.warning(
+                f"POSITION_SIZE_USD={self.position_usd} exceeds 80% of balance at {leverage}x "
+                f"(balance={balance:.2f}, cap={max_position_usd:.2f}) — capping"
+            )
+            return max_position_usd
+        return self.position_usd
+
     def _contracts(self, price: float, leverage: int = None) -> int:
         """Convert USD position size + leverage to number of contracts.
         XBTUSDTM: 1 contract = 0.001 BTC, so 1 contract ≈ price * 0.001 USDT.
         """
         lev = leverage if leverage else self.leverage
-        notional = self.position_usd * lev
+        position_usd = self._safe_position_usd(lev)
+        notional = position_usd * lev
         contracts = int(notional / (price * 0.001))
         return max(1, contracts)
 
